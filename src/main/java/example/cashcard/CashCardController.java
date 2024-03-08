@@ -12,7 +12,6 @@ import java.net.URI;
 import java.util.*;
 import java.security.Principal;
 
-
 @RestController
 @RequestMapping("/cashcards")
 class CashCardController {
@@ -36,7 +35,8 @@ class CashCardController {
   }
 
   @PostMapping // Add one (POST)
-  private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb, Principal principal) {
+  private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb,
+      Principal principal) {
     CashCard cashCardWithOwner = new CashCard(null, newCashCardRequest.amount(), principal.getName());
     CashCard savedCashCard = cashCardRepository.save(cashCardWithOwner);
     URI locationOfNewCashCard = ucb
@@ -48,7 +48,7 @@ class CashCardController {
 
   @GetMapping() // Get all
   private ResponseEntity<Iterable<CashCard>> findAll(Pageable pageable, Principal principal) {
-    Page<CashCard> page = cashCardRepository.findByOwner(principal.getName(),//cashCardRepository.findAll(
+    Page<CashCard> page = cashCardRepository.findByOwner(principal.getName(), // cashCardRepository.findAll(
         PageRequest.of(
             pageable.getPageNumber(),
             pageable.getPageSize(),
@@ -70,8 +70,17 @@ class CashCardController {
     return ResponseEntity.notFound().build();
   }
 
+  @DeleteMapping("/{id}")
+  private ResponseEntity<Void> deleteCashCard(@PathVariable Long id, Principal principal) {
+    if (cashCardRepository.existsByIdAndOwner(id, principal.getName())) {
+      cashCardRepository.deleteById(id);
+      return ResponseEntity.noContent().build();
+    }
+    return ResponseEntity.notFound().build();
+  }
+
   private CashCard findCashCard(Long requestedId, Principal principal) {
     return cashCardRepository.findByIdAndOwner(requestedId, principal.getName());
   }
-  
+
 }
